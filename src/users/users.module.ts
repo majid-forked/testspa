@@ -6,6 +6,7 @@ import { UsersService } from './users.service';
 import { UserRepository } from './users.repository';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { ConfigurationModule } from './../configuration/configuration.module';
 
 @Module({
   imports: [
@@ -18,6 +19,9 @@ import { ConfigService } from '@nestjs/config';
         },
       }),
       inject: [ConfigService],
+    }),
+    ConfigurationModule.register({
+      db_url: 'https://jsonplaceholder.typicode.com/posts',
     }),
   ],
   controllers: [UsersController],
