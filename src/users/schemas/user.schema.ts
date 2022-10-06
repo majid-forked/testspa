@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document,Types } from 'mongoose';
 
-interface IUser{
+export interface IUser{
   _id:Types.ObjectId;
  email: string;
  pecuniary: number;
