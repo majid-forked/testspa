@@ -3,6 +3,7 @@ import { UserRepository } from './users.repository';
 import { JwtService } from '@nestjs/jwt';
 import { UserResponse } from './dto/response/user-response.dto';
 import { PecuniaryUserDto } from './dto/request/pecuniary-user.dto';
+import { comparePassword, hashPassword } from './../services/hash.service';
 
 @Injectable()
 export class UsersService {
@@ -48,13 +49,59 @@ export class UsersService {
     }
   }
 
+  async findByEmailAuth(data) {
+    const { email, password } = data;
+
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      throw new HttpException(
+        {
+          data: {},
+          status: 'fail',
+        },
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const passwordCheck = comparePassword(password, user.password);
+
+    if (!passwordCheck) {
+      throw new Error('authentication failed');
+    }
+
+    const usernewBuild = this.buildUserResponse([user, 'success']);
+    const token = await this.createJWT(user);
+    return { ...usernewBuild, token };
+  }
+
+  async createUser(user) {
+    console.log(user);
+
+    const { email, pecuniary, image, password } = user;
+
+    const hashedPassword = hashPassword(password);
+
+    const newUser = await this.userRepository.createOne({
+      email,
+      pecuniary,
+      image,
+      password: hashedPassword,
+    });
+
+    if (!newUser) {
+      throw new Error('user creation failed');
+    }
+
+    return this.buildUserResponse([newUser, 'success']);
+  }
+
   async createJWT(user: any): Promise<string> {
     const payload = { sub: user._id, iat: Date.now() };
     return this.jwtService.sign(payload);
   }
 
   // DTO
-  buildUserResponse(data: any): UserResponse {
+  private buildUserResponse(data: any): UserResponse {
     return {
       email: data[0]['email'],
       pecuniary: data[0]['pecuniary'],
